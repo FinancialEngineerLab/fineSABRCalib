@@ -1,4 +1,4 @@
-# fineSABRCalib
+# fineSABR
 
 SABR Volatility Calibration
 
