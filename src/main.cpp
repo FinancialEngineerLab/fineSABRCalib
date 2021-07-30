@@ -59,9 +59,7 @@ int main(int argc, char *argv[])
 			v4->setVolatility(0.32);
 			
 			res=Model.getVanillaPrice(100.0);
-			std::cout << " Updated SABR ATM Price " << res << std::endl;
-			
-												 
+			std::cout << " Updated SABR ATM Price " << res << std::endl;							 
 												 
 			// for "SABR PARAMETERS" Calibration // 
 			std::cout << std::endl;
@@ -97,10 +95,92 @@ int main(int argc, char *argv[])
 			const bool isNuFixed[] = {true, false};						   
 			const bool visRhoFixed[] = {true, false};
 										   							   							   
-			std::vector<ext::shared_ptr<OptimizationMethod>> methods_ = { }   
-										
-			
-												 
+			std::vector<ext::shared_ptr<OptimizationMethod>> methods_ = { ext::shared_ptr<OptimizationMethod>(new Simplex(0.01)),
+																		ext::shared_ptr<OptimizationMethod> (new LevenbergMarquardt(1e-8, 1e-8, 1e-8)) };
+			ext::shared_ptr<EndCriteria> endCriteria(enw EndCriteria(100000, 100, 1e-8.0, 1e-8.0, 1e-8.0));
+										   
+			for(auto& method : methods_)
+				{
+				for(boo i : vegaWeighted)
+				{
+					for(bool k_a: isAlphaFixed)
+					{
+						for(bool k_b : isBetaFixed)
+						{
+							for(bool k_n : isNuFixed)
+							{
+								for(bool k_r: isRhoFixed)
+								{
+									SABRInterpolation sabrInterpolation(strikes.begin(), strikes.end(), volatilties.begin(), tau, fwd,
+																		k_a ? initialAlpha : alphaGuess,
+																		k_b ? intitalBeta : betaGuress,
+																		k_n ? initialNu : nuGuess,
+																		k_r ? initialRho : rhoGuess,
+																		k_a, k_b, k_n, k_r, i, endCriteria, method, 1e-15.0);
+									sabrInterpolation.update();
+									
+									bool failed = false;
+									Real calibratedAlpha = sabrInterpolation.alpha();
+									Real calibratedBeta = sabrInterpolation.beta();
+									Real calibratedNu = sabrInterpolation.nu();
+									REal calibratedRho = sabrInterpolation.rho();
+									Real error;
+									
+									error = std::fabs(initialAlpha - calibratedAlpha);
+									if(error > calibrationTolerance)
+									{
+										BOOST_ERROR("\nfailed to calibrate Alpha SABR parameter : "
+												   << "\n expected:   " << initialAlpha
+												   << "\n calibrated: " << calibratedAlpha
+												   << "\n error:      " << error);
+										failed = true;
+									}
+									
+									error = std::fabs(initialBeta - calibratedBeta);
+									if(error > calibrationTolerance)
+									{
+										BOOST_ERROR("\nfailed to calibrate Beta SABR parameter : "
+												   << "\n expected:   " << initialBeta
+												   << "\n calibrated: " << calibratedBeta
+												   << "\n error:      " << error);
+										failed = true;
+									}
+																				
+									error = std::fabs(initialNu - calibratedNu);
+									if(error > calibrationTolerance)
+									{
+										BOOST_ERROR("\nfailed to calibrate Nu SABR parameter : "
+												   << "\n expected:   " << initialNu
+												   << "\n calibrated: " << calibratedNu
+												   << "\n error:      " << error);
+										failed = true;
+									}
+									
+									error = std::fabs(initialRho - calibratedRho);
+									if(error > calibrationTolerance)
+									{
+										BOOST_ERROR("\nfailed to calibrate Rho SABR parameter : "
+												   << "\n expected:   " << initialRho
+												   << "\n calibrated: " << calibratedRho
+												   << "\n error:      " << error);
+										failed = true;
+									}								
+									
+									if(failed)
+									{
+										BOOST_FAIL("\n SABR Calibration failure:"
+												  << "\n isAlphaFixed:     " <<k_a
+												  << "\n isBetaFixed :     " <<k_b
+												  << "\n isNuFixed   :     " <<k_n
+												  << "\n isRhoFixed  :     " <<k_r
+												  << "\n vegaWieghted[i] : " << i);
+									}
+								}
+							}
+						}
+					}
+				}	
+			}												 
 		}
 		catch (std::exception& e)
 		{
