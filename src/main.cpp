@@ -11,7 +11,7 @@ using namespace boost::unit_test_framework;
 
 int main(int argc, char *argv[])
 {
-	{
+	
 		try
 		{
 			std::vector<Real> strikes(31);
