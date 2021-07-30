@@ -1,18 +1,35 @@
 #include <iostream>
+#include <cmath>
+#include <utility>
 #include <ql/quantlib.hpp>
-
+#include "utilities.hpp"
 #include "lazyobject3.hpp"
 
+using namespace std;
+using namespace QuantLib;
+using namespace boost::unit_test_framework;
 
 int main(int argc, char *argv[])
 {
 	{
 		try
 		{
-			boost::shared_ptr<SimpleVolQuote> v1(new VolQuote(0.2,90.0));
-			boost::shared_ptr<SimpleVolQuote> v2(new VolQuote(0.191,95.0));
-			boost::shared_ptr<SimpleVolQuote> v3(new VolQuote(0.187,100.0));
-			boost::shared_ptr<SimpleVolQuote> v4(new VolQuote(0.211,105.0));
+			std::vector<Real> strikes(31);
+			std::vector<Real> volatilites(31);
+			
+			strikes[0] = 90.0;
+			strikes[1] = 95.0;
+			strikes[2] = 100.0;
+			strikes[3] = 105.0;
+			volatilites[0] = 0.202;
+			volatilites[1] = 0.191;
+			volatilites[2] = 0.186;
+			volatilites[3] = 0.211;
+			
+			boost::shared_ptr<VolQuote> v1(new VolQuote(volatilites[0],strikes[0]));
+			boost::shared_ptr<VolQuote> v2(new VolQuote(volatilites[1],strikes[1]));
+			boost::shared_ptr<VolQuote> v3(new VolQuote(volatilites[2],strikes[2]);
+			boost::shared_ptr<VolQuote> v4(new VolQuote(volatilites[3],strikes[3]));
 			
 			std::vector<boost::shared_ptr<VolQuote> > volvec;
 			volVec.push_back(v1);
@@ -31,7 +48,7 @@ int main(int argc, char *argv[])
 			SabrModel Model(inputSmile, fwd, tau, rf,rd);
 			
 			Real res= Model.getVanillaPrice(100.0);
-			std::cout << " Inital SABR ATM " << res << std::endl;
+			std::cout << " Inital SABR ATM Price" << res << std::endl;
 			res = Model.getVanillaPrice(90.0);
 			res = Model.getVanillaPrice(95.0);
 			res = Model.getVanillaPrice(105.0);
@@ -42,8 +59,48 @@ int main(int argc, char *argv[])
 			v4->setVolatility(0.32);
 			
 			res=Model.getVanillaPrice(100.0);
-			std::cout << " Updated SABR ATM " << res << std::endl;
+			std::cout << " Updated SABR ATM Price " << res << std::endl;
 			
+												 
+												 
+			// for "SABR PARAMETERS" Calibration // 
+			std::cout << std::endl;
+			
+			std::cout << " SABR Parameter Calibration " << std::endl;
+			Real tolerance = 1.0e-15.0;
+			Real calibrationTolerance = 5.0e-8.0;
+										   
+			Real initialAlpha = 0.3;
+			Real initialBeta = 0.6;
+			Real initialNu = 0.02;
+			Real initialRho = 0.01;
+							
+			for(Size i=0; i<strikes.size();i++)
+			{
+				Real calculatedVol = sabrVolatility(strikes[i], fwd, tau, initialAlpha, initialBeta, initialNu, initialRho);
+				if(std::fabs(volatilites[i] -calculatedVol) > tolerance)
+				{
+					BOOST_ERROR( "Failed to Calculate SABR Function at Strike" << strikes[i] << "\n expected: " << volatilites[i]
+						   << "\n calculated : " << calculatedVol
+						   << "\n error : " << std::fabs(calculatedVol-volatilties[i]));
+				}
+			}
+			
+			Real alphaGuess = std::sqrt(0.2);
+			Real betaGuess = 0.5;
+			Real nuGuess = std::sqrt(0.4);
+			Real rhoGuess =0.0;
+			
+			const bool vegaWeighted[] = {true, false};
+			const bool isAlphaFixed[] = {true, false};
+			const bool isBetaFixed[] = {true, false};						   
+			const bool isNuFixed[] = {true, false};						   
+			const bool visRhoFixed[] = {true, false};
+										   							   							   
+			std::vector<ext::shared_ptr<OptimizationMethod>> methods_ = { }   
+										
+			
+												 
 		}
 		catch (std::exception& e)
 		{

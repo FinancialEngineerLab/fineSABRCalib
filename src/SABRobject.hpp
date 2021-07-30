@@ -32,7 +32,7 @@ class SabrModel : public LazyObject
 		if(intp_==NULL)
 		{
 			intp_.reset(new SABRInterpolation(strikeVec_.begin(), strikeVec_.end(),
-			volVec_.begin(), tau_, fwd_, 0.1,0.1,0.1,0.1, false, false, false, false));
+			volVec_.begin(), tau_, fwd_, 0.1,1.0,0.1,0.1, false, false, false, false));
 		}
 		intp_->update();
 		std::cout << "Recalibration Performed!" <<std::endl;
