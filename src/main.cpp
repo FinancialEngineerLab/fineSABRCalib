@@ -10,12 +10,7 @@ using namespace QuantLib;
 using namespace boost::unit_test_framework;
 
 int main(int argc, char *argv[])
-<<<<<<< HEAD
-	{
-=======
 {
-	
->>>>>>> b26f9ec5a216138c7c379fe84d2435a03096bebe
 		try
 		{
 			std::vector<Real> strikes(31);
